@@ -1,3 +1,3 @@
 # Musings, notes & HOWTOs
 
-* [home lab cluster: virtual and bare metal kubernetes cluster with kcli](https://github.com/fromanirh/fromanirh/docs/howtos/virtual-baremetal-kubernetes-cluster-with-kcli.md)
+* [SMT awareness in kubernetes' cpumanager - intro](https://github.com/fromanirh/fromanirh/docs/presentations/k8s-cpumanager-smtawareness/README.md)
