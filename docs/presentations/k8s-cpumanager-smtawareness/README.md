@@ -5,8 +5,8 @@
 
 ## Scope
 
-Main focus: latency-sensitive workload running on bare-metal nodes.
-Secondary focus: reduce the chance of side-channel attacks using CPU L2/MLC cache.
+1. (main) latency-sensitive workload running on bare-metal nodes.
+2. (secondary) reduce the chance of side-channel attacks using CPU L2/MLC cache.
 
 ## Introduction
 
@@ -17,7 +17,7 @@ If the SMT is enabled, a `core` is a virtual CPU - a hardware thread; if SMT is 
 
 SMT implementations leverage efficient core resource sharing to improve the throughput.
 However, it is possible for different containers (including and most notably non-malicious) to interfere to each other, conflicting to access execution unit, L1 at MLC/L2 caches.
-This is an instance of the more general [noisy neighbor problem](https://en.wikipedia.org/wiki/Cloud_computing_issues#Performance_interference_and_noisy_neighbors)
+This is an instance of the more general [noisy neighbor problem](https://en.wikipedia.org/wiki/Cloud_computing_issues#Performance_interference_and_noisy_neighbors).
 
 For a certain class of latency sensitive workloads, like realtime or [DPDK applications](https://www.dpdk.org/) the noisy neighbors cause unpredictable and highly undesirable latency spikes.
 It becomes thus desirable to enhance cpumanager to avoid these scenarios. Additionally, enabling better control on core sharing reduces the chance of side-channel attacks, thus improving
@@ -34,3 +34,4 @@ other workloads, and with minimal changes to the codebase
 
 A more comprehensive presentation, exploring in more details the problem and the proposed solution, and describing the implementation, is expected to be delivered
 to sig-node meeting on April 13, 2021. A KEP describing all this work is also in progress.
+
