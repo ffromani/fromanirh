@@ -1,4 +1,4 @@
-# SMT-aware cpu manager policy
+# SMT-aware cpu manager
 
 ## Table of Contents
 
@@ -27,7 +27,7 @@ Items marked with (R) are required *prior to targeting to a milestone / release*
 
 ## Summary
 
-We propose an additional policy for cpumanager to make the behaviour of latency-sensitive applications more predictable when running on SMT-enabled systems.
+We propose a change in cpumanager to make the behaviour of latency-sensitive applications more predictable when running on SMT-enabled systems.
 
 ## Motivation
 
@@ -50,15 +50,11 @@ To maximise cache efficiency, the workload  wants to be pinned to thread sibling
 The workload guest may wish to avoid thread siblings. This is to avoid noisy neighborhoods, which may have effect on core compute resources or in processor cache interference.
 Implementations of this policy proposed here are already found in [external projects](https://github.com/nokia/CPU-Pooler#hyperthreading-support)
 or in [OpenStack](https://specs.openstack.org/openstack/nova-specs/specs/mitaka/implemented/virt-driver-cpu-thread-pinning.html),
-which is one of the leading platform for VNF (Virtual Network Functions), the previous incarnation of CNF.
-
-### Other?
-
-WRITEME
+which is one of the leading platform for VNF (Virtual Network Functions), the predecessor of CNFs.
 
 ### Risks and Mitigations
 
-This new policy is opt-in. Users will need to explicitly enable it in their kubelet configuration. The change is very self contained, with little impact in the shared codebase.
+This new behaviour is opt-in. Users will need to explicitly enable it in their kubelet configuration. The change is very self contained, with little impact in the shared codebase.
 The impact in the shared codebase will be addressed enhancing the current testsuite.
 
 | Risk                                                      | Impact        | Mitigation |
@@ -71,10 +67,9 @@ The impact in the shared codebase will be addressed enhancing the current testsu
 ### Proposed Change
 
 We propose to add a new cpumanager policy called `smtaware` which will be a further refinement of the existing static policy. This means the new policy will implement all the behaviour of the static policy, with additional guarantees:
-Ensure that containers will always get an even number of physical cores, rounding up. This is done to ensure that a guaranteed container will never share resources to any other container, thus preventing any possible noisy neighborhood.
- On 2-way SMT platforms, like Intel and AMD CPUs, which have 2 hardware threads per physical core, this means that each guaranteed container will have allocated a even number of cores, multiple of 2, rounding up.
-Ensure that containers will be admitted by the kubelet iff they require a even number of cores
-This is done to make the resource accounting trivially consistent, see below for details.
+- Ensure that containers will always get an even number of physical cores, rounding up. This is done to ensure that a guaranteed container will never share resources to any other container, thus preventing any possible noisy neighborhood. On 2-way SMT platforms, like Intel and AMD CPUs, which have 2 hardware threads per physical core, this means that each guaranteed container will have allocated a even number of cores, multiple of 2, rounding up.
+- Ensure that containers will be admitted by the kubelet iff they require a even number of cores. This is done to make the resource accounting trivially consistent, see below for details.
+- Should the node not have enough free physical cores, the Pod will be put in Failed state, with `SMTAlignmentError` as reason.
 
 To illustrate the behaviour of the policy, we will consider the following CPU topology. We will take a cpu package with 16 physical cores, 2-way SMT-capable.
 
@@ -86,7 +81,69 @@ If the container requires a odd number of cores, the leftover core will be left 
 
 Example: let’s consider a pod with one container requesting 5 cores.
 
-![Example core allocation when request is an odd number of cores](smtaware-allocation-odd-cores.png)
+![Example core allocation with the smtaware policy when requesting a odd number of cores](smtaware-allocation-odd-cores.png)
+
+### Resource Accounting
+
+A key side effect of this change is that the total amount of virtual cores actually taken by a container will be greater than the amount of cores requested by the container.
+cpumanager, thus the kubelet will reserve for the container the cores requested by the workload plus some amount of unallocated cores.
+
+
+Examples with `smtaware`, 2-way SMT system (any recent Intel/AMD cpu)
+
+
+| Requested Virtual cores | Workload-required Virtual Cores | Unallocatable Virtual Cores | Total taken virtual cores |
+| ----------------------- | ------------------------------- | --------------------------- | ------------------------- |
+| 1                       | 1                               | 1                           | 2                         |
+| ----------------------- | ------------------------------- | --------------------------- | ------------------------- |
+| 2                       | 2                               | 0                           | 2                         |
+| ----------------------- | ------------------------------- | --------------------------- | ------------------------- |
+| 4                       | 4                               | 0                           | 4                         |
+| ----------------------- | ------------------------------- | --------------------------- | ------------------------- |
+| 5                       | 5                               | 1                           | 6                         |
+| ----------------------- | ------------------------------- | --------------------------- | ------------------------- |
+| 11                      | 11                              | 1                           | 12                        |
+| ----------------------- | ------------------------------- | --------------------------- | ------------------------- |
+
+
+From the cpumanager perspective, we do not believe we need to introduce an explicit “unallocatable” pool.
+Thanks to the data and provided by cadvisor, the cpumanager always know If SMT is enabled or not
+Which virtual core (virtual thread) is sibling with which other virtual core (virtual thread)
+
+From the node allocatable perspective, as part of this change we will need to make sure that `node.Status.Allocatable` reflects the real amount of cores taken by a container.
+
+From scheduler perspective, the skew between core requested by containers and cores actually allocated on nodes, may cause some bad scheduling decisions.
+This means the scheduler may pick nodes which cannot run the workload, leading to SMTAlignmentError, which in turn can lead to runaway pod creation like we observed
+for TopologyAffinityError.
+
+To prevent this behaviour, and in order to minimize the overall changes to the system, we slightly adjust the behaviour of the `smtaware` policy: the policy will reject pods whose Guaranteed QOS containers request uneven amount of cores.
+
+### Next steps: emulating non-SMT behaviour on a SMT worker node
+
+We propose another future extension, which we postpone to a later date because of currently unresolved resource allocation issue. We describe it here to present the evolution path of this work.
+
+Another cpu manager, called `smtisolate` will emulate non-SMT on SMT-enabled machines. It will have no effect on non-SMT machines. Only one of a group of virtual thread pair will be used per physical core core.
+All but one thread sibling on each utilized core is therefore guaranteed to be unallocatable.
+
+Example: let’s consider a pod with one container requesting 5 cores.
+
+![Example core allocation with the smtisolate policy when requesting a odd number of cores](smtisolate-allocation-odd-cores.png)
+
+Resource Accounting examples with `smtisolate`, 2-way SMT system (any recent Intel/AMD cpu)
+
+
+| Requested Virtual cores | Workload-required Virtual Cores | Unallocatable Virtual Cores | Total taken virtual cores |
+| ----------------------- | ------------------------------- | --------------------------- | ------------------------- |
+| 1                       | 1                               | 1                           | 2                         |
+| ----------------------- | ------------------------------- | --------------------------- | ------------------------- |
+| 2                       | 2                               | 2                           | 4                         |
+| ----------------------- | ------------------------------- | --------------------------- | ------------------------- |
+| 4                       | 4                               | 4                           | 8                         |
+| ----------------------- | ------------------------------- | --------------------------- | ------------------------- |
+| 5                       | 5                               | 5                           | 10                        |
+| ----------------------- | ------------------------------- | --------------------------- | ------------------------- |
+| 11                      | 11                              | 11                          | 22                        |
+| ----------------------- | ------------------------------- | --------------------------- | ------------------------- |
 
 
 ### Test Plan
