@@ -35,3 +35,14 @@ other workloads, and with minimal changes to the codebase
 A more comprehensive presentation, exploring in more details the problem and the proposed solution, and describing the implementation, is expected to be delivered
 to sig-node meeting on April 13, 2021. A KEP describing all this work is also in progress.
 
+## Kubernetes enhancement
+
+[Tracked here](https://github.com/kubernetes/enhancements/issues/2625)
+
+## Slides
+
+TBD
+
+## Attic
+
+- *previous* versions of slides, originally planned for sig-node meeting 20210413 (didn't get to them) [here](OBSOLETE-smt-aware-cpumanager-sig-node-20210413.pdf).
