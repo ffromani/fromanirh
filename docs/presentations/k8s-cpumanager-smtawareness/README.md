@@ -41,7 +41,7 @@ to sig-node meeting on April 13, 2021. A KEP describing all this work is also in
 
 ## Slides
 
-TBD
+[Slides for April 20, 2021 sig-node meeting](smt-sware-cpumanger-sig-node-20210420.pdf)
 
 ## Attic
 
