@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-KIND_NODE_IMAGE="${KIND_NODE_IMAGE:-quay.io/fromani/kind-node:v1.22-5855baf611a-smtalign-2}"
+KIND_NODE_IMAGE="${KIND_NODE_IMAGE:-quay.io/fromani/kind-node:v1.22-a56d847e32b-smtalign-4}"
 
 cat > kind-config.yaml << EOF
 # necessary for conformance

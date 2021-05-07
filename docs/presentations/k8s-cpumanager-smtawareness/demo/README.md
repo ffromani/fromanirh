@@ -3,13 +3,13 @@ SMT-aligning cpumanager live demo!
 
 Try out [SMT-aligning cpumanager](https://github.com/kubernetes/enhancements/pull/2626) on your workstation thanks to [kind >= 0.10](https://kind.sigs.k8s.io/)!
 
-Download `setup-demo.sh` and run it on your host!
+Download [setup-demo.sh](https://raw.githubusercontent.com/fromanirh/fromanirh/main/docs/presentations/k8s-cpumanager-smtawareness/demo/setup-demo.sh) and run it on your host!
 
 `setup-demo.sh` will boot up a 2-worker kind cluster with all the settings enabled to try the SMT-alignment feature.
 Unfortunately, because the enhancmement requires a new kubelet config field, we need to run extra steps besides the usual `kind` commandline.
 Every step is documented in the `setup-demo.sh` script itself.
 
-Once you have your `kind` cluster running, you can see the negative flow: if the pod cpu requests cannot be fullfilled with full physical cores,
+Once you have your `kind` cluster running, you can see the negative flow: if the [pod cpu requests cannot be fullfilled with full physical cores](https://raw.githubusercontent.com/fromanirh/fromanirh/main/docs/presentations/k8s-cpumanager-smtawareness/demo/gu-pod-odd.yaml),
 the pod will be rejected.
 
 ```bash
@@ -90,7 +90,8 @@ Events:
   Warning  SMTAlignmentError  20s   kubelet, kind-worker2  SMT Alignment Error: requested 1 cpus not multiple cpus per core = 2
 ```
 
-In the positive flow, if the container requests can be fullfilled with full cores, the pod is admitted as expected:
+In the positive flow, [if the container requests CAN be fullfilled with full cores](https://raw.githubusercontent.com/fromanirh/fromanirh/main/docs/presentations/k8s-cpumanager-smtawareness/demo/gu-pod-even.yaml),
+the pod is admitted as expected:
 ```bash
 $ cat gu-pod-even.yaml 
 apiVersion: v1
