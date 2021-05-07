@@ -17,6 +17,8 @@ kubeadmConfigPatches:
   cpuManagerPolicy: static
   cpuManagerReconcilePeriod: 5s
   reservedSystemCPUs: "0"
+  featureGates:
+    CPUManagerPolicyOptions: true
 nodes:
 - role: control-plane
 - role: worker
@@ -52,6 +54,8 @@ evictionHard:
   nodefs.available: 0%
   nodefs.inodesFree: 0%
 evictionPressureTransitionPeriod: 0s
+featureGates:
+  CPUManagerPolicyOptions: true
 fileCheckFrequency: 0s
 healthzBindAddress: 127.0.0.1
 healthzPort: 10248
