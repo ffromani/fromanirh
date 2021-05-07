@@ -2,15 +2,16 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/utsname.h>
+#include <fcntl.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static
-size_t
-strlcpy(char *dst, const char *src, size_t dsize);
+static size_t strlcpy(char *dst, const char *src, size_t dsize);
+static void override(char *buf, size_t bufsize, const char *ident);
 
 int uname(struct utsname *buf)
 {
@@ -18,26 +19,39 @@ int uname(struct utsname *buf)
     if (err) {
         return err;
     }
-    const char *release = secure_getenv("FAKE_UNAME_RELEASE");
-    if (release != NULL) {
-        strlcpy(buf->release, release, sizeof(buf->release));
-    }
 
-    const char *sysname = secure_getenv("FAKE_UNAME_SYSNAME");
-    if (sysname != NULL) {
-        strlcpy(buf->sysname, sysname, sizeof(buf->sysname));
-    }
-    
-    const char *version = secure_getenv("FAKE_UNAME_VERSION");
-    if (version != NULL) {
-        strlcpy(buf->version, version, sizeof(buf->version));
-    }
+    override(buf->release, sizeof(buf->release), "RELEASE");
+    override(buf->sysname, sizeof(buf->sysname), "SYSNAME");
+    override(buf->version, sizeof(buf->version), "VERSION");
+    override(buf->machine, sizeof(buf->machine), "MACHINE");
 
-    const char *machine = secure_getenv("FAKE_UNAME_MACHINE");
-    if (machine != NULL) {
-        strlcpy(buf->machine, machine, sizeof(buf->machine));
-    }
     return 0;
+}
+
+
+static
+void
+override(char *buf, size_t bufsize, const char *ident)
+{
+    char namebuf[256] = { '\0' };
+    
+    snprintf(namebuf, sizeof(namebuf), "FAKE_UNAME_%s_FILE", ident);
+    const char *fpath = secure_getenv(namebuf);
+    if (fpath != NULL) {
+        int fd = open(fpath, O_RDONLY);
+        if (fd != -1) {
+            memset(buf, 0, bufsize);
+            read(fd, buf, bufsize-1);
+            close(fd);
+        }
+    }
+
+    snprintf(namebuf, sizeof(namebuf), "FAKE_UNAME_%s", ident);
+    const char *value = secure_getenv(namebuf);
+    if (value != NULL) {
+        memset(buf, 0, bufsize); // mostly over caution
+        strlcpy(buf, value, bufsize);
+    }
 }
 
 
