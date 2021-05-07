@@ -5,6 +5,8 @@ Try out [SMT-aligning cpumanager](https://github.com/kubernetes/enhancements/pul
 
 Download [setup-demo.sh](https://raw.githubusercontent.com/fromanirh/fromanirh/main/docs/presentations/k8s-cpumanager-smtawareness/demo/setup-demo.sh) and run it on your host!
 
+Download and watch the [demo](https://raw.githubusercontent.com/fromanirh/fromanirh/main/docs/presentations/k8s-cpumanager-smtawareness/demo/smtalign.cast) using [asciinema](https://asciinema.org/) or see it [online](https://asciinema.org/a/412556)!
+
 `setup-demo.sh` will boot up a 2-worker kind cluster with all the settings enabled to try the SMT-alignment feature.
 Unfortunately, because the enhancmement requires a new kubelet config field, we need to run extra steps besides the usual `kind` commandline.
 Every step is documented in the `setup-demo.sh` script itself.
