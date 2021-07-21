@@ -7,9 +7,11 @@
 - I'm currently:
 
   
-  > Contributing to improve kubernetes/OpenShift, to make sure they are a great platform for telco workloads
+  - Contributing to improve kubernetes/OpenShift, to make sure they are a great platform for telco workloads
   
-  > Writing a lot of golang
+  - Contributing to [GHW](https://github.com/jaypipes/ghw)!  
+  
+  - Writing a lot of golang
   
 
 - Someday:
