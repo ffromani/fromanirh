@@ -1,4 +1,4 @@
-### Hi! I'm Francesco!
+### WHOAMI
 
 - I'm a software engineer working with Red Hat
 
@@ -7,7 +7,7 @@
 - I'm currently:
 
   
-  - Contributing to improve kubernetes/OpenShift, to make sure they are a great platform for telco workloads
+  - Contributing to improve Kubernetes/OpenShift, to make sure they are a great platform for telco workloads
   
   - Contributing to [GHW](https://github.com/jaypipes/ghw)!  
   
