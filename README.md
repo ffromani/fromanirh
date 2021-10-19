@@ -16,3 +16,10 @@
 
 - Someday:
   - I'll finish my lisp book(s) :/
+
+
+- Trivias:
+
+  - Experienced modem noises firsthand (and not just once)
+
+  - Favorite app is a terminal emulator
