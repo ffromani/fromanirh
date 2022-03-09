@@ -15,7 +15,7 @@
   
 
 - Someday:
-  - I'll finish my lisp book(s) :/
+  - I'll finish to read the lisp book(s) :/
 
 
 - Trivias:
