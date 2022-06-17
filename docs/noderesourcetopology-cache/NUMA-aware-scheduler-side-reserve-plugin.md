@@ -1,9 +1,10 @@
-# [PUBLIC] NUMA-aware scheduler side caching using a reserve plugin
+# NUMA-aware scheduler side caching using a reserve plugin
 
 Version 6 - 20220615
+
 Francesco Romani \<[*fromani\@redhat.com*](mailto:fromani@redhat.com)\>
 With review and contributions from
-Swati Sehgal \<[*swsehgali\@redhat.com*](mailto:swsehgali@redhat.com)\>
+Swati Sehgal \<[*swsehgal\@redhat.com*](mailto:swsehgal@redhat.com)\>
 
 ## Introduction
 
@@ -127,10 +128,8 @@ do their own accounting.
 
 **Prerequisites:**
 
-1.  Topology updater agents like
-    [*RTE*](https://github.com/k8stopologyawareschedwg/resource-topology-exporter)
-    or
-    [*NFD*](https://github.com/kubernetes-sigs/node-feature-discovery/tree/master/cmd/nfd-topology-updater)
+1.  Topology updater agents like [RTE](https://github.com/k8stopologyawareschedwg/resource-topology-exporter)
+    or [NFD](https://github.com/kubernetes-sigs/node-feature-discovery/tree/master/cmd/nfd-topology-updater)
     or any other compatible implementation are still deployed on all the
     worker nodes (targetable by the NUMA-aware plugins), and they report
     NRT updates with a predictable and regular cadence - typically
@@ -233,11 +232,11 @@ The node state can be encoded:
     on both sides (node and scheduler)
 
     a.  We don't cover how to compute the fingerprint, intentionally.
-        > This task will be deferred by a third-party package. The
-        > fingerprint needs to be stable and computable on both sides
-        > independently. The hashing does need to be cryptographically
-        > secure, and collisions will only cause increased load without
-        > other negative effects.
+        This task will be deferred by a third-party package. The
+        fingerprint needs to be stable and computable on both sides
+        independently. The hashing does need to be cryptographically
+        secure, and collisions will only cause increased load without
+        other negative effects.
 
 To help the scheduler, all NRT objects shall have a node state
 fingerprint to record the node state they represent.
@@ -261,10 +260,10 @@ field in the NodeResourceTopology object.
     node state fingerprint
 
     a.  It's easy to track how many consecutive times a node is filtered
-        > out, and we use this value to approximate "node fully
-        > allocated". Actually checking a node is "fully allocated"
-        > would require setting detailed load thresholds which are
-        > impractical or too complex.
+        out, and we use this value to approximate "node fully
+        allocated". Actually checking a node is "fully allocated"
+        would require setting detailed load thresholds which are
+        impractical or too complex.
 
 4.  Compare the computed node start fingerprint with the node state
     fingerprint of the last NRT object received
@@ -287,26 +286,24 @@ We estimate the time/space overhead of the proposed changes as follows:
 
 -   At node level:
 
-    -   Update agents which publish NRT objects can consume node-local
-        > APIs
-        > ([*podresources*](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/#grpc-endpoint-list),
-        > or [*kubelet
-        > local*](https://www.deepnetwork.com/blog/2020/01/13/kubelet-api.html#pods))
-        > to learn about the resource allocation. They need to process
-        > all the running pods anyway. Thus, the impact is expected to
-        > be minimal. No calls to the APIserver are expected.
+    -   Update agents which publish NRT objects can consume node-local APIs
+        ([podresources](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/#grpc-endpoint-list),
+        or [kubelet local](https://www.deepnetwork.com/blog/2020/01/13/kubelet-api.html#pods))
+        to learn about the resource allocation. They need to process
+        all the running pods anyway. Thus, the impact is expected to
+        be minimal. No calls to the APIserver are expected.
 
 -   At scheduler level:
 
     -   Computing a node state fingerprint **will** require extra work
-        > to list all the pods on a node (albeit from an already
-        > existing cache). We aim to minimize this overhead by doing
-        > this work only when needed - so when a node cache is dirty and
-        > the node is considered full.
+        to list all the pods on a node (albeit from an already
+        existing cache). We aim to minimize this overhead by doing
+        this work only when needed - so when a node cache is dirty and
+        the node is considered full.
 
     -   When we have high pod churn this extra load can have an impact
-        > on the scheduler plugin resource consumption. We will need to
-        > monitor and tune the system.
+        on the scheduler plugin resource consumption. We will need to
+        monitor and tune the system.
 
 ## Future enhancements and open issues
 
@@ -318,33 +315,22 @@ We estimate the time/space overhead of the proposed changes as follows:
     part of the API contract.
 
     a.  The API is Stable anyway and unlikely to change, we can just
-        > make this (sensible) behavior part of the API contract
+        make this (sensible) behavior part of the API contract
 
-    b.  NRT update agent can use both podresources API and kubelet local
-        > APIs
+    b.  NRT update agent can use both podresources API and kubelet local APIs
 
 ### General
 
-[*The current pod fingerprinting
-implementation*](https://github.com/k8stopologyawareschedwg/podfingerprint)
+[The current pod fingerprinting implementation](https://github.com/k8stopologyawareschedwg/podfingerprint)
 uses the \`namespace+name\` pair to identify a pod. In case of high pod
-churn when burstable or guaranteed pods get deleted and
-
-recreated with non-identical pod specs (e.g. changing pod resources
-requests/limits), the fingerprint will clash. So, two different set of
+churn when burstable or guaranteed pods get deleted and recreated with non-identical pod specs
+(e.g. changing pod resources requests/limits), the fingerprint will clash. So, two different set of
 pods will yield the same fingerprint.
 
-However kubernetes best practices [*suggest to always use controllers,
-not \"naked\"
-pods*](https://kubernetes.io/docs/concepts/configuration/overview/#naked-pods-vs-replicasets-deployments-and-jobs).
-
-[*Kubernetes controllers will generate create unique names for
-pods*](https://github.com/kubernetes/kubernetes/blob/v1.24.1/pkg/controller/controller_utils.go#L553),
-hence in this scenario the name clash described above should occur very
-rarely.
-
-[*Please refer to the pod fingerprinting implementation for more
-details*](https://github.com/k8stopologyawareschedwg/podfingerprint#fingerprint-v1-pod-aliasing-issue).
+However kubernetes best practices [suggest to always use controllers, not \"naked\" pods](https://kubernetes.io/docs/concepts/configuration/overview/#naked-pods-vs-replicasets-deployments-and-jobs).
+[Kubernetes controllers will generate create unique names for pods](https://github.com/kubernetes/kubernetes/blob/v1.24.1/pkg/controller/controller_utils.go#L553),
+hence in this scenario the name clash described above should occur very rarely.
+[Please refer to the pod fingerprinting implementation for more details](https://github.com/k8stopologyawareschedwg/podfingerprint#fingerprint-v1-pod-aliasing-issue).
 
 ## Version history
 
