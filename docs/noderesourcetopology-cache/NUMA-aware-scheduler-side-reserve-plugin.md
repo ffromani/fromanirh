@@ -69,7 +69,7 @@ good scheduling decisions.
 
 ## Description and drawbacks of the current solution
 
-At node level, a deamonset enables components which query the resource
+At node level, a daemonset enables components which query the resource
 allocation state from the kubelet - which is the ultimate source of
 truth -, reorganize this data with per-NUMA node granularity, fills and
 updates NRT objects. We call these software components "\[node\]
